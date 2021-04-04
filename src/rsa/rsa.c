@@ -8,11 +8,58 @@
 
 
 
+
+uint64_t _mul_mod(uint64_t a,uint64_t b,uint64_t m){
+	uint64_t o=0;
+	while (a){
+		if (a&1){
+			o=(o+b)%m;
+		}
+		a>>=1;
+		b=(b<<1)%m;
+	}
+	return o;
+}
+
+
+
 void rsa_create_keypair(rsa_keypair_t* kp){
 	HCRYPTPROV ctx;
 	CryptAcquireContext(&ctx,NULL,NULL,PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
-	uint64_t p=61;
-	uint64_t q=53;
+	uint64_t p=0;
+_gen_p:
+	CryptGenRandom(ctx,sizeof(uint64_t),(BYTE*)&p);
+	// uint64_t t=p-1;
+	// uint64_t c=1;
+	// while (t){
+	// 	uint64_t s=(t>32?32:t);
+	// 	t-=s;
+	// 	c=(c<<s)%p;
+	// }
+	p&=~0x8000000000000000;
+	if (p<100){
+		goto _gen_p;
+	}
+	uint64_t pb=2;
+	uint64_t pt=p-1;
+	uint64_t o=1;
+	while (pt){
+		if (pt&1){
+			o=_mul_mod(o,pb,p);
+		}
+		pb=_mul_mod(pb,pb,p);
+		pt>>=1;
+	}
+	if (o!=1){
+		printf("%llu\n",p);
+		goto _gen_p;
+	}
+	uint64_t q=0;
+	while (q<100){
+		CryptGenRandom(ctx,sizeof(uint64_t),(BYTE*)&q);
+	}
+	printf("%llu, %llu\n",p,q);
+	/***/p=61;q=53;/***/
 	kp->n=p*q;
 	p--;
 	q--;
