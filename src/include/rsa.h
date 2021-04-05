@@ -5,6 +5,7 @@
 
 
 typedef struct __RSA_KEYPAIR{
+	uint16_t sz;
 	uint64_t d;
 	uint64_t e;
 	uint64_t n;
